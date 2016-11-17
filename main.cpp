@@ -1,91 +1,94 @@
+#include <math.h>      // For math routines (such as sqrt & trig).
 #include <stdio.h>
-#include <GLUT/GLUT.h>
-#include<time.h>
-void delay(float secs)
+#include <stdlib.h>      // For the "exit" function
+#include <GLUT/GLUT.h>   // OpenGL Graphics Utility Library
+#include "SimpleAnim.h"
+float AnimateStepY = 0.0f,AnimateStepX=0.0f;
+int RunMode=1;
+void mySpecialKeyFunc( int key, int x, int y )
 {
-    float end = clock()/CLOCKS_PER_SEC + secs;
-    while((clock()/CLOCKS_PER_SEC) < end);
-}
-void display(void)
-{
-    float y=-4;;
-    while(y<3)
-    {
-    glPushMatrix();
-    
-    glTranslatef(-1,y,0.0); // 3. Translate to the object's position.
-    
-   //glRotatef(45,0.0,y,0.0); // 2. Rotate the object.
-    
-    glClear( GL_COLOR_BUFFER_BIT);
-    glColor3f(1.0, 1.0, 1.0);
-    glBegin(GL_POLYGON);
-    glVertex3f(2.0, 4.0, 0.0);
-    glVertex3f(3.5, 4.0, 0.0);
-    glVertex3f(3.5, 6.0, 0.0);
-    glVertex3f(2.0, 6.0, 0.0);
-    glEnd();
-    glLineWidth(2.5);
-    glColor3f(1.0, 1.0, 1.0);
-    glBegin(GL_LINES);
-    glVertex3f(3.5, 5.0, 0.0);
-    glVertex3f(3.56, 5.0, 0.0);
-    glEnd();
-    glLineWidth(2.5);
-    glColor3f(1.0, 1.0, 1.0);
-    glBegin(GL_LINES);
-    glVertex3f(4.0, 5.0, 0.0);
-    glVertex3f(4.06, 5.0, 0.0);
-    glEnd();
-    glLineWidth(2.5);
-    glColor3f(1.0, 1.0, 1.0);
-    glBegin(GL_LINES);
-    glVertex3f(4.60, 5.0, 0.0);
-    glVertex3f(4.66, 5.0, 0.0);
-    glEnd();
-    glLineWidth(2.5);
-    glColor3f(1.0, 1.0, 1.0);
-    glBegin(GL_LINES);
-    glVertex3f(5.04, 5.0, 0.0);
-    glVertex3f(5.10, 5.0, 0.0);
-    glEnd();
-    glLineWidth(2.5);
-    glColor3f(1.0, 1.0, 1.0);
-    glBegin(GL_LINES);
-    glVertex3f(5.48, 5.0, 0.0);
-    glVertex3f(5.54, 5.0, 0.0);
-    glEnd();
-    glLineWidth(2.5);
-    glColor3f(1.0, 1.0, 1.0);
-    glBegin(GL_LINES);
-    glVertex3f(5.92, 5.0, 0.0);
-    glVertex3f(5.98, 5.0, 0.0);
-    glEnd();
-    glPopMatrix();
-    glFlush();
-      //  x=x+0.4;
-        y=y+0.4;
-        delay(0.0002);
+    switch ( key ) {
+        case GLUT_KEY_UP:
+            if ( AnimateStepY <4) {         // Avoid overflow problems
+                AnimateStepY+=0.05f;      // Increase the angle increment
+            }
+            break;
+        case GLUT_KEY_DOWN:
+            if (AnimateStepY>-4) {      // Avoid underflow problems.
+                AnimateStepY-=0.05;   // Decrease the angle increment
+            }
+            break;
+        case GLUT_KEY_LEFT:
+            if ( AnimateStepX <4) {         // Avoid overflow problems
+                AnimateStepX-=0.05f;      // Increase the angle increment
+                }
+                break;
+            case GLUT_KEY_RIGHT:
+                if (AnimateStepX>-4) {      // Avoid underflow problems.
+                    AnimateStepX+=0.05;   // Decrease the angle increment
+                }
+                break;
     }
 }
-
-int main(int argc, char **argv)
+void drawScene(void)
 {
-    printf("hello world\n");
-    glutInit(&argc, argv);
-    glutInitDisplayMode ( GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
+    // Clear the rendering window
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    glutInitWindowPosition(100,100);
-    glutInitWindowSize(800,500);
-    glutCreateWindow ("square");
+    // Rotate the image
+    glMatrixMode( GL_MODELVIEW );         // Current matrix affects objects positions
+    glLoadIdentity();                  // Initialize to the identity
+    glTranslatef( AnimateStepX, AnimateStepY, 0.0 );               // Translate rotation center from origin
     
-    glClearColor(0.0, 0.0, 0.0, 0.0);         // black background
-    glMatrixMode(GL_PROJECTION);              // setup viewing projection
-    glLoadIdentity();                           // start with identity matrix
-    glOrtho(0.0, 10.0, 0.0, 10.0, -1.0, 1.0);   // setup a 10x10x2 viewing world
+    // Draw three overlapping triangles of different colors
+    glBegin( GL_POLYGON );
+    glColor3f( 1.0, 1.0, 0.0 );
+    glVertex3f(-.1, -.1, 0.0 );
+    glVertex3f( 0.05, -.1, 0.0 );
+    glVertex3f( 0.05, 0.05, 0.0 );
+    glVertex3f( -.1, 0.05, 0.0 );
+    glEnd();
+    glBegin(GL_LINE);
+    glColor3f( 1.0, 0.5, 0.5 );
+    glVertex3f( -1.0, 1.0, 0.0 );
+    glVertex3f(1.0, 1.0, 0.0 );
+    glEnd();
     
-    glutDisplayFunc(display); 
-    glutMainLoop();
+    glutSwapBuffers();
     
-    return 0; 
+    if ( RunMode==1 ) {
+        glutPostRedisplay();   // Trigger an automatic redraw for animation
+    }
+    
 }
+void initRendering()
+{
+    glShadeModel( GL_FLAT );   // The default value of GL_SMOOTH is usually better
+    glEnable( GL_DEPTH_TEST );   // Depth testing must be turned on
+}
+
+int main( int argc, char** argv )
+{
+    glutInit(&argc,argv);
+    
+    // We're going to animate it, so double buffer
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
+    
+    // Window position (from top corner), and size (width% and hieght)
+    glutInitWindowPosition( 10, 60 );
+    glutInitWindowSize( 800, 600 );
+    glutCreateWindow( "Gleba" );
+    
+    // Initialize OpenGL as we like it..
+    initRendering();
+    glutSpecialFunc( mySpecialKeyFunc );      // Handles "special" keyboard keys
+    glutDisplayFunc( drawScene );
+    
+    fprintf(stdout, "Arrow keys control speed.  Press \"r\" to run,  \"s\" to single step.\n");
+    
+    // Start the main loop.  glutMainLoop never returns.
+    glutMainLoop(  );
+    return 0;
+}
+    
+    
