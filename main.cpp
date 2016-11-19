@@ -13,8 +13,10 @@ int flag=0;
 float e;
 float teta_pipe=0.0;
 int x=-40,y=-40;
+int life;
 float bulletx,bullety,bulletradius=.5;
 const int numofblocks=22;
+bool game;
 struct block{
   float x;
   float y;
@@ -27,8 +29,8 @@ struct planes
   float y;
   bool exist;
   int time;
-}p[5];
-int score,planeXadd=1,planeYadd=1,times=1;
+}p[5],p1[5];
+int score,highscore,planeXadd=1,planeYadd=1,times=1;
 float px=1,py=1;
 void moveright(void)
 {
@@ -147,8 +149,7 @@ void reshape(int w, int h)
 static void key(unsigned char key, int x, int y)
 {
     switch (key) {
-    case 'Q':
-    case 'q':
+    case 27:
         exit(0);
         glutPostRedisplay();
         break;
@@ -181,6 +182,11 @@ static void key(unsigned char key, int x, int y)
     case 'K':
           teta_pipe+=.01;
           glutPostRedisplay();
+          break;
+    case 13:
+          game=1;//enter key
+          score=100;
+          life=3;
           break;
     case 32:
         shoot();
@@ -316,7 +322,7 @@ void drawblocks()
 
   }
 }
-bool check_collision(float ballX,float ballY,float BallDiameter,float RectX,float RectY,float RectWidth=4.0, float RectHeight=4.0)
+bool check_collision(float ballX,float ballY,float BallDiameter,float RectX,float RectY,float RectWidth=6.0, float RectHeight=6.0)
 {
   if ( ballY + BallDiameter < RectY ) return false;
   else if ( ballY > RectY + RectHeight ) return false;
@@ -369,7 +375,15 @@ bool check_collision_brick()
   {
     p[i].exist=0;
     score+=100;
-    cout<<score;
+    // cout<<score;
+    return true;
+  }
+  for(int i=0;i<5;i++)
+  if(check_collision(bulletx,bullety,bulletradius,p1[i].x,p1[i].y,20))
+  {
+    life--;
+    p1[i].exist=0;
+    // cout<<score;
     return true;
   }
   return false;
@@ -411,12 +425,12 @@ void initializeplanes()
 {
   for(int i=0;i<5;i++)
   {
-    if(p[i].exist==0)
+    if(p[i].exist==0||p[i].time==0)
     {
       p[i].x=rand()%80-40;
       p[i].y=rand()%80-40;
       p[i].exist=1;
-      p[i].time=1000;
+      p[i].time=500;
     }
   }
 }
@@ -426,14 +440,49 @@ void drawplanes()
   {
   if(p[i].time==0 || p[i].exist==0){
     initializeplanes();
+
   }
   glBegin(GL_QUADS);
-  glColor3f(0, .2, .5);
+  glColor3f(0, 1, .5);
   glVertex2f(-2.0+p[i].x, 2.0+p[i].y);
   glVertex2f(-2.0+p[i].x, -2.0+p[i].y);
   glVertex2f(2.0+p[i].x, -2.0+p[i].y);
   glVertex2f(2.0+p[i].x, 2.0+p[i].y);
   p[i].time--;
+  glEnd();
+}}
+
+void initializetraps()
+{
+  for(int i=0;i<5;i++)
+  {
+    if(p[i].exist==0||p[i].time==0)
+    {
+      p1[i].x=rand()%80-40;
+      p1[i].y=rand()%80-40;
+      p1[i].exist=1;
+      p1[i].time=300;
+    }
+  }
+}
+void drawtraps()
+{
+  for(int i=0;i<5;i++)
+  {
+  if(p1[i].time==0 || p1[i].exist==0){
+    initializetraps();
+
+  }
+  glBegin(GL_QUADS);
+  glColor3f(1, 0, 0);
+  for(int j=-2;j<3;j++)
+  {
+    glVertex2f(-2.0+p1[i].x+j*4.5, 2.0+p1[i].y);
+    glVertex2f(-2.0+p1[i].x+j*4.5, -2.0+p1[i].y);
+    glVertex2f(2.0+p1[i].x+j*4.5, -2.0+p1[i].y);
+    glVertex2f(2.0+p1[i].x+j*4.5, 2.0+p1[i].y);
+  }
+  p1[i].time--;
   glEnd();
 }}
 
@@ -454,9 +503,35 @@ void points()
   char tmp_str[40];
   sprintf(tmp_str, "Score : %d", score);
   writeOnScreen(tmp_str);
+  glColor3f(1, 0, 0);
+  glRasterPos2f(35, 35);
+  // char tmp_str[40];
+  sprintf(tmp_str, "Life : %d", 25+life/10);
+  writeOnScreen(tmp_str);
+}
+char s1[]="SCORE:";
+void printscore(int x, int y,int z, char *string)
+{
+//set the position of the text in the window using the x and y coordinates
+    glRasterPos2f(x,y);
+//get the length of the string to display
+    int len = (int) strlen(string);
+
+//loop to display character by character
+    for (int i = 0; i < len; i++)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,string[i]);
+    }
+    char tmp_str[40];
+    sprintf(tmp_str, ": %d", score);
+    //sprintf(" %d",score);
 }
 void display(void)
 {
+  if(game==1)
+  {
+    if(25+life/10==0)
+      game=0;
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST); //disable depth comparisons and update the depth buffer.
     usleep(10000);
@@ -468,6 +543,8 @@ void display(void)
     drawbullet();
     drawplanes();
     drawplanes();
+    drawtraps();
+
     points();
     // cout<<bulletx<<bullety<<endl;
 
@@ -486,8 +563,36 @@ void display(void)
       flag=1;
 
     }
+  }
+  else if(game==0)
+   {
+     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clean the screen and the depth buffer
+     glLoadIdentity();
+     if(score>highscore)
+      highscore=score;
+     string s2;
+     char s3[3];
+     glColor3f(1, 1, 0);
+     printscore(-10,0,0,s1);
+     s2=to_string(score);
+     strcpy(s3, s2.c_str());
+     printscore(1,0,0,s3);
+     char s7[]="HIGH SCORE ";
+     strcat(s7,to_string(highscore).c_str());
+     printscore(-12,-3,0,s7);
+     glColor3f(0, 1, 0);
+     char s4[]="IMMORTAL WARS";
+     printscore(-13,10,0,s4);
+     glColor3f(0.2, .1, 1);
+     char s5[]="PRESS ENTER TO START GAME ";
+     printscore(-18,-10,0,s5);
+     char s6[]="PRESS ESC TO EXIT GAME ";
+     printscore(-16,-15,0,s6);
+
+	}
     glPopMatrix();
     glutSwapBuffers();
+
 }
 
 
@@ -498,7 +603,8 @@ int main(int argc, char** argv)
     glutInitWindowSize(1000, 1000);
     glutInitWindowPosition(200, 100);
     glutCreateWindow("Immortal Wars");
-    score=100;
+    game=0;
+    highscore=0;
     glClearColor(0.1, 0.1, 0.1, 0.0);
     glutDisplayFunc(display);
     glutIdleFunc(update_objects);
