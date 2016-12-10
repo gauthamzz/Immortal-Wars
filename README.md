@@ -1,7 +1,7 @@
 
 # IMMORTAL WARS GAME
 
-OpenGL Game made during my course IGVC in IIIT-A
+>OpenGL Game 
 
 ## Screenshots
 Main Page
@@ -16,7 +16,7 @@ Purple ones deflect your bullets
 # Prequisites
 
 1. freeglut or OpenGL Library `sudo apt-get install freeglut3`
-2. C++ `sudo apt-get install g++'
+2. C++ `sudo apt-get install g++`
 
 # To run
 
